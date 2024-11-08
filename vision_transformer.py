@@ -83,7 +83,7 @@ class VisionTransformer(nn.Module):
         # Concatenate class token and add positional embeddings
         cls_tokens = self.cls_token.expand(B, -1, -1)
         x = torch.cat((cls_tokens, x), dim=1)
-        x += self.pos_embedding
+        x += self.pos_embedding # absolute position embedding // can change to relative ..etc 
 
         # Pass through transformer layers
         for attn, norm1, mlp, norm2 in self.layers:
