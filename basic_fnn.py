@@ -68,10 +68,10 @@ def forward_pass(X, params):
     W1, b1 = params['W1'], params['b1']
     W2, b2 = params['W2'], params['b2']
 
-    Z1 = np.dot(W1, X) + b1
-    A1 = relu(Z1)  # Activation for hidden layer
-    Z2 = np.dot(W2, A1) + b2
-    A2 = softmax(Z2)  # Activation for output layer
+    Z1 = np.dot(W1, X) + b1  # (hidden_dim, m) 
+    A1 = relu(Z1)  # Activation for hidden layer #(hidden_dim, m)
+    Z2 = np.dot(W2, A1) + b2 # (output_dim, m)
+    A2 = softmax(Z2)  # Activation for output layer # (output_dim, m)
 
     cache = {'Z1': Z1, 'A1': A1, 'Z2': Z2, 'A2': A2}
     return A2, cache
@@ -93,8 +93,8 @@ def backward_pass(X, Y, cache, params):
     A1, A2 = cache['A1'], cache['A2']
     m = X.shape[1]
 
-    dZ2 = A2- Y # (c,m)
-    dW2 = np.dot(dZ2, A1.T) / m  # a1 ( n,m ) a1.t (m,n)
+    dZ2 = A2- Y # (c,m)  #  # (output_dim, m)
+    dW2 = np.dot(dZ2, A1.T) / m  # a1 ( n,m ) a1.t (m,n)  # (output_dim, m) (m,hidden) # (output,hidden)
     db2 = np.sum(dZ2, axis=1, keepdims=True) /m # we want to sum for each element 
 
     dA1 = np.dot(W2.T, dZ2)
@@ -138,6 +138,52 @@ def train(X, Y, input_dim, hidden_dim, output_dim, epochs=1000, learning_rate=0.
 
 
 
+## with the adam optimizer 
+def initialize_adam(params):
+    v = {}
+    s = {}
+    for key in params:
+        v[key] = np.zeros_like(params[key])
+        s[key] = np.zeros_like(params[key])
+    return v, s
+
+def update_parameters_with_adam(params, grads, v, s, t, learning_rate=0.001, beta1=0.9, beta2=0.999, epsilon=1e-8):
+    """
+    Update parameters using Adam optimization algorithm.
+    
+    Arguments:
+    params -- dictionary containing your parameters 
+    grads -- dictionary containing your gradients, output of backward propagation
+    v -- Adam variable, moving average of the first gradient
+    s -- Adam variable, moving average of the squared gradient
+    t -- current iteration number
+    learning_rate -- the learning rate, scalar
+    beta1 -- Exponential decay hyperparameter for the first moment estimates 
+    beta2 -- Exponential decay hyperparameter for the second moment estimates 
+    epsilon -- hyperparameter preventing division by zero in Adam updates
+
+    Returns:
+    params -- dictionary containing your updated parameters 
+    v -- Adam variable, moving average of the first gradient
+    s -- Adam variable, moving average of the squared gradient
+    """
+    for key in params:
+        # Moving average of the gradients
+        v[key] = beta1 * v[key] + (1 - beta1) * grads['d' + key]
+        # Moving average of the squared gradients
+        s[key] = beta2 * s[key] + (1 - beta2) * (grads['d' + key] ** 2)
+        
+        # Bias correction
+        v_corrected = v[key] / (1 - beta1 ** t)
+        s_corrected = s[key] / (1 - beta2 ** t)
+        
+        # Update parameters
+        params[key] -= learning_rate * v_corrected / (np.sqrt(s_corrected) + epsilon)
+        
+    return params, v, s
+
+
+
 
 """
 Now... if we wanted to incorporate attention 
@@ -147,18 +193,18 @@ Now... if we wanted to incorporate attention
 def attention(Q, K, V):
     """
     Compute scaled dot-product attention.
-    Q, K, V all have shape (hidden_dim, m), where
+    Q, K, V all have shape (m, dk), where
     hidden_dim = number of hidden neurons
     m = number of examples (batch size)
     """
     # Step 1: Calculate attention scores
-    scores = np.dot(Q.T, K) / np.sqrt(Q.shape[0])  # Shape: (m, m)
+    scores = np.dot(Q, K.T) / np.sqrt(Q.shape[0])  # Shape: (m,m)
 
     # Step 2: Apply softmax to get attention weights
     attn_weights = softmax(scores)  # Shape: (m, m)
 
     # Step 3: Compute weighted sum of values
-    attn_output = np.dot(V, attn_weights)  # Shape: (hidden_dim, m)
+    attn_output = np.dot(attn_weights, V)  # Shape: (m, dk)
 
     return attn_output
 

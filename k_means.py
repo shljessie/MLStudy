@@ -21,6 +21,7 @@ def assign_clusters(X, centroids):
 
 def update_centroids(X, labels, k):
     """Calculate new centroids as the mean of points in each cluster."""
+    print('labels',labels)
     new_centroids = []
     for i in range(k):
         cluster_points = X[labels == i]
@@ -31,7 +32,7 @@ def update_centroids(X, labels, k):
             new_centroids.append(centroids[i])
     return np.array(new_centroids)
 
-def kmeans(X, k, max_iters=100):
+def kmeans(X, k, max_iters=1):
     """Perform K-means clustering."""
     centroids = initialize_centroids(X, k)
     for i in range(max_iters):

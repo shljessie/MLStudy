@@ -114,3 +114,14 @@ def maxPooling(feature_map, pool_size=2, stride=2 ):
           output[i//stride, j//stride] = np.max(sub_region)
 
   return output
+
+
+
+
+"""
+
+Use NumPy broadcasting to replace explicit loops for convolution.
+Switch to PyTorch or TensorFlow for GPU acceleration.
+Implement batch processing for inputs and gradients.
+
+"""

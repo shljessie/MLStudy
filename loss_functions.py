@@ -39,3 +39,26 @@ def kl_divergence(y_true, y_pred):
     y_pred = np.clip(y_pred, epsilon, 1)
     return np.sum(y_true * np.log(y_true / y_pred))
 
+def calculate_fid(mu1, sigma1, mu2, sigma2):
+    """
+    Calculate the Fréchet Inception Distance (FID) between two distributions.
+    Parameters:
+        - mu1, sigma1: mean and covariance of the features for the real images
+        - mu2, sigma2: mean and covariance of the features for the generated images
+    Returns:
+        - FID score
+    """
+    # Compute the squared difference of means
+    diff = mu1 - mu2
+    mean_diff = np.sum(diff ** 2)
+    
+    # Compute sqrt of product of covariance matrices
+    covmean = sqrtm(sigma1.dot(sigma2))
+    
+    # If covmean is complex due to numerical error, keep the real part
+    if np.iscomplexobj(covmean):
+        covmean = covmean.real
+    
+    # Compute the FID score
+    fid = mean_diff + np.trace(sigma1 + sigma2 - 2 * covmean)
+    return fid
